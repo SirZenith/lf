@@ -428,6 +428,7 @@ func (app *app) loop() {
 					paths[i] = file.path
 				}
 				onLoad(app, paths)
+				onLoadSimple(app, d.path)
 			}
 
 			if d.path == app.nav.currDir().path {

@@ -658,6 +658,12 @@ func onLoad(app *app, files []string) {
 	}
 }
 
+func onLoadSimple(app *app, dirPath string) {
+	if cmd, ok := gOpts.cmds["on-load-simp"]; ok {
+		cmd.eval(app, []string{dirPath})
+	}
+}
+
 func onFocusGained(app *app) {
 	if cmd, ok := gOpts.cmds["on-focus-gained"]; ok {
 		cmd.eval(app, nil)

@@ -1025,12 +1025,49 @@ func exitCompMenu(app *app) {
 	app.menuCompActive = false
 }
 
+func addCustomInfo(app *app, k, v string, withAfterSort bool) bool {
+	changed := false
+
+	path, err := filepath.Abs(replaceTilde(k))
+	if err != nil {
+		app.ui.echoerrf("addcustominfo: %s", err)
+		return changed
+	}
+
+	d := app.nav.getDir(filepath.Dir(path))
+
+	var f *file
+	for _, file := range d.allFiles {
+		if file.path == path {
+			f = file
+			break
+		}
+	}
+	if f == nil {
+		app.ui.echoerrf("addcustominfo: file not found: %s", path)
+		return changed
+	}
+
+	if f.customInfo != v {
+		f.customInfo = v
+		changed = true
+
+		// only sort when order changes
+		if withAfterSort && getSortBy(d.path) == customSort {
+			d.sort()
+		}
+	}
+
+	return changed
+}
+
 func (e *callExpr) eval(app *app, _ []string) {
 	os.Setenv("lf_count", strconv.Itoa(e.count))
 
 	// commands that shouldn't clear the message line
 	silentCmds := []string{
 		"addcustominfo",
+		"addcustominfo-batch",
 		"clearmaps",
 		"draw",
 		"load",
@@ -1629,32 +1666,19 @@ func (e *callExpr) eval(app *app, _ []string) {
 			return
 		}
 
-		path, err := filepath.Abs(replaceTilde(k))
-		if err != nil {
-			app.ui.echoerrf("addcustominfo: %s", err)
+		addCustomInfo(app, k, v, true)
+	case "addcustominfo-batch":
+		argc := len(e.args)
+		if argc%2 != 0 {
+			app.ui.echoerr("addcustominfo-batch: number of arguments must be even")
 			return
 		}
 
-		d := app.nav.getDir(filepath.Dir(path))
-
-		var f *file
-		for _, file := range d.allFiles {
-			if file.path == path {
-				f = file
-				break
-			}
-		}
-		if f == nil {
-			app.ui.echoerrf("addcustominfo: file not found: %s", path)
-			return
-		}
-
-		if f.customInfo != v {
-			f.customInfo = v
-			// only sort when order changes
-			if getSortBy(d.path) == customSort {
-				d.sort()
-			}
+		changed := false
+		for i := 0; i < argc; i += 2 {
+			k, v := e.args[i], e.args[i+1]
+			withAfterSort := i+2 >= argc && changed
+			changed = addCustomInfo(app, k, v, withAfterSort) || changed
 		}
 	case "calcdirsize":
 		err := app.nav.calcDirSize()

@@ -21,6 +21,7 @@ var (
 		"cmap",
 		"cmd",
 		"addcustominfo",
+		"addcustominfo-batch",
 		"bottom",
 		"calcdirsize",
 		"cd",
@@ -450,6 +451,10 @@ func completeCmd(s string) (matches []compMatch, longest string) {
 	case "addcustominfo", "select", "source":
 		if len(f) == 2 {
 			matches, longest = matchCmdFile(f[1], false)
+		}
+	case "addcustominfo-batch":
+		if len(f)%2 == 0 {
+			matches, longest = matchCmdFile(f[len(f)-1], false)
 		}
 	case "toggle":
 		matches, longest = matchCmdFile(f[len(f)-1], false)

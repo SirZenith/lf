@@ -220,7 +220,8 @@ func fileInfo(f *file, d *dir, userWidth, groupWidth, customWidth int) (string, 
 			// separately and print it later using the offset.
 			off = info.Len()
 			fmt.Fprintf(&info, " %*s", customWidth, "")
-			custom = fmt.Sprintf(" %s%*s", f.customInfo, customWidth-printLength(f.customInfo), "")
+			visibleCustomInfo := f.getVisibleCustomInfo()
+			custom = fmt.Sprintf(" %s%*s", visibleCustomInfo, customWidth-printLength(visibleCustomInfo), "")
 		default:
 			log.Printf("unknown info type: %s", s)
 		}
@@ -484,7 +485,8 @@ func getCustomWidth(dir *dir, beg, end int) int {
 	maxw := 0
 
 	for _, f := range dir.files[beg:end] {
-		maxw = max(printLength(f.customInfo), maxw)
+		visibleInfo := f.getVisibleCustomInfo()
+		maxw = max(printLength(visibleInfo), maxw)
 	}
 
 	return maxw

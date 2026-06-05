@@ -16,6 +16,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/djherbis/times"
@@ -29,6 +30,8 @@ const (
 	working                  // Symbolic link with an existing target.
 	broken                   // Symbolic link with a missing target.
 )
+
+const invisibleCustomInfoMarker = "\x1F" // ASCII Unit Separator, chosen for no special reason
 
 type file struct {
 	os.FileInfo           // stat information
@@ -129,6 +132,21 @@ func newFile(path string) *file {
 
 func (file *file) isPreviewable() bool {
 	return !file.IsDir() || gOpts.dirpreviews
+}
+
+var (
+	onceMakeInvisibleCustomInfoPattern sync.Once
+	invisibleCustomInfoPattern         *regexp.Regexp
+)
+
+func (file *file) getVisibleCustomInfo() string {
+	onceMakeInvisibleCustomInfoPattern.Do(func() {
+		// content surrounded by invisible marker is removed when custom info
+		// gets displayed
+		invisibleCustomInfoPattern = regexp.MustCompile(invisibleCustomInfoMarker + ".*" + invisibleCustomInfoMarker)
+	})
+
+	return invisibleCustomInfoPattern.ReplaceAllString(file.customInfo, "")
 }
 
 type fakeStat struct {
